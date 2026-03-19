@@ -1,0 +1,497 @@
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <title>BO BARBER - Panel Admin</title>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com"/>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+        <link rel="stylesheet" href="style.css"/>
+    </head>
+    <body class="admin-body">
+        
+        <div id="admin-content-wrapper" style="display: none;">
+        
+            <header class="admin-header">
+                <div class="container header-inner">
+                    <div class="brand">
+                        <h1>Panel de Administración</h1>
+                    </div>
+                    <nav class="main-nav">
+                        <a href="index.html">Ver sitio</a>
+                        <a href="#appointments">Citas</a>
+                        <a href="#daily-agenda">Agenda del Día</a>
+                        <a href="#" id="logout-btn" class="cta-logout">Cerrar Sesión</a>
+                    </nav>
+                </div>
+            </header>
+
+            <main class="container admin-wrap">
+                <section class="panel">
+                    <h2>Control de Horarios</h2>
+                    <div id="schedule-toggles" class="schedule-control-container">Cargando configuración...</div>
+                </section>
+                
+                <section class="panel" id="manual-booking">
+                    <h2>Agendar Cita Manualmente</h2>
+                    <p>Agrega una cita para un cliente (por teléfono, DM, etc.). Estas citas se agregan como <strong>confirmadas</strong>.</p>
+                    <form id="manual-booking-form" class="manual-booking-form">
+                        <div class="form-group">
+                            <label for="manual-name">Nombre del Cliente</label>
+                            <input type="text" id="manual-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-phone">Teléfono (WhatsApp)</label>
+                            <input type="tel" id="manual-phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="manual-service">Servicio</label>
+                            <select id="manual-service" required>
+                                <option value="" disabled selected>-- Selecciona un servicio --</option>
+                                <option value="Corte">Corte - $95</option>
+                                <option value="Corte y Ceja">Corte y Ceja - $100</option>
+                                <option value="Corte y Barba">Corte y Barba - $120</option>
+                            </select>
+                        </div>
+                        <div class="form-group-split">
+                            <div class="form-group">
+                                <label for="manual-date">Fecha de la Cita</label>
+                                <input type="date" id="manual-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="manual-time">Hora de la Cita</label>
+                                <input type="time" id="manual-time" step="1800" required> </div>
+                        </div>
+                        <p id="manual-booking-error" class="error-message"></p>
+                        <button type="submit" id="manual-submit-btn" class="submit-btn">Agendar Cita Manual</button>
+                    </form>
+                </section>
+
+                <section class="panel" id="daily-agenda">
+                    <h2>Agenda del Día</h2>
+                    <p>Selecciona una fecha para ver todas las citas <strong>confirmadas</strong> de ese día.</p>
+                    <input type="date" id="agenda-date-picker" class="admin-date-picker">
+                    <div id="daily-agenda-list" class="daily-agenda-list">
+                        <p>Selecciona un día para ver la agenda.</p>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <h2 id="appointments">Citas Pendientes</h2>
+                    <div class="controls">
+                        <button id="cleanup-btn" class="danger">
+                            <i class="fa fa-trash"></i> Limpiar Citas Pasadas
+                        </button>
+                        </div>
+                    <div id="appointments-list" class="appointments-list">Cargando citas...</div>
+                </section>
+            </main>
+
+            <footer class="admin-footer">
+                <div class="container">
+                    <p class="footer-copy">© 2025 BO BARBER. Panel de administración.</p>
+                </div>
+            </footer>
+        
+        </div> <script type="module">
+            // --- Importaciones de Firebase (Auth y Firestore) ---
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+            import { 
+                getAuth, 
+                onAuthStateChanged, 
+                signOut 
+            } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+            import { 
+                getFirestore, collection, getDocs, addDoc,
+                updateDoc, deleteDoc, doc, query, onSnapshot, orderBy,
+                where, Timestamp, writeBatch, serverTimestamp
+            } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+            // --- Configuración de Firebase ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyAAjL_Tur33-tbZa4kC8OoQYF2jNXEKd4o",
+                authDomain: "barberiaappenrique.firebaseapp.com",
+                projectId: "barberiaappenrique",
+                storageBucket: "barberiaappenrique.firebasestorage.app",
+                messagingSenderId: "181014839149",
+                appId: "1:181014839149:web:664079f16c68628af72464",
+                measurementId: "G-BWG46JCZDK"
+            };
+
+            // --- Inicializar Firebase ---
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+
+            // --- SCRIPT DE SEGURIDAD (GUARDIÁN) ---
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('admin-content-wrapper').style.display = 'block';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+
+            // --- LÓGICA DEL PANEL DE ADMIN ---
+            document.addEventListener('DOMContentLoaded', () => {
+                
+                function $id(id) { return document.getElementById(id); }
+
+                // Elementos del DOM
+                const appointmentsList = $id('appointments-list');
+                const scheduleToggles = $id('schedule-toggles');
+                const logoutBtn = $id('logout-btn');
+                const cleanupBtn = $id('cleanup-btn');
+                const agendaDatePicker = $id('agenda-date-picker');
+                const dailyAgendaList = $id('daily-agenda-list');
+                const manualBookingForm = $id('manual-booking-form');
+                const manualSubmitBtn = $id('manual-submit-btn');
+                const manualBookingError = $id('manual-booking-error');
+
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        signOut(auth).then(() => {
+                            window.location.href = 'login.html';
+                        }).catch((error) => {
+                            console.error("Error al cerrar sesión:", error);
+                        });
+                    });
+                }
+
+                /* ---------- RENDER APPOINTMENTS (Citas Pendientes) ---------- */
+                function renderPendingAppointments() {
+                    const q = query(collection(db, "appointments"), where("status", "==", "pending"), orderBy("createdAt", "asc"));
+                    
+                    onSnapshot(q, (querySnapshot) => {
+                        appointmentsList.innerHTML = ""; 
+                        if (querySnapshot.empty) {
+                            appointmentsList.innerHTML = "<p>No hay citas pendientes de aprobación.</p>";
+                            return;
+                        }
+                        
+                        let appointments = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                        appointments.forEach(cita => {
+                            const card = document.createElement('div');
+                            card.className = 'appointment-card status-pending';
+                            card.dataset.id = cita.id; 
+                            card.innerHTML = `
+                                <div class="appointment-info">
+                                    <span>${cita.clientName} (PENDIENTE)</span>
+                                    <strong>Servicio: ${cita.service || 'No especificado'}</strong>
+                                </div>
+                                <div><strong>Día:</strong> ${cita.day}</div>
+                                <div><strong>Hora:</strong> ${cita.time}</div>
+                                <div><strong>Tel:</strong> ${cita.clientPhone || 'N/A'}</div>
+                                <div class="appointment-actions">
+                                    <button class="action-btn approve-btn" data-id="${cita.id}" data-phone="${cita.clientPhone || ''}" data-name="${cita.clientName}">Aprobar y WhatsApp</button>
+                                    <button class="action-btn delete-btn" data-id="${cita.id}">Rechazar / Eliminar</button>
+                                </div>
+                            `;
+                            appointmentsList.appendChild(card);
+                        });
+                    }, (error) => {
+                        console.error("Error al obtener citas pendientes:", error);
+                        appointmentsList.innerHTML = "<p>Error al conectar con el servidor.</VNOSQL_ERROR_0/p>";
+                    });
+                }
+
+                /* ---------- UPDATE STATUS (Sin cambios) ---------- */
+                async function updateAppointmentStatus(citaId, newStatus) {
+                    try {
+                        const docRef = doc(db, "appointments", citaId);
+                        await updateDoc(docRef, { status: newStatus });
+                    } catch (err) { console.error("Error actualizando cita:", err); }
+                }
+
+                /* ---------- DELETE APPOINTMENT (Sin cambios) ---------- */
+                async function deleteAppointment(citaId) {
+                    try {
+                        const docRef = doc(db, "appointments", citaId);
+                        await deleteDoc(docRef);
+                    } catch (err) { console.error("Error eliminando cita:", err); }
+                }
+
+                function handleAppointmentAction(e) {
+                    const btn = e.target.closest('.action-btn');
+                    if (!btn) return;
+                    const id = btn.dataset.id;
+                    if (btn.classList.contains('approve-btn')) {
+                        btn.disabled = true;
+                        btn.textContent = 'Aprobando...';
+                        const phone = btn.dataset.phone;
+                        const name = btn.dataset.name || 'cliente';
+                        if (phone) {
+                            const clean = phone.replace(/[\s+()-]/g,'');
+                            const withCode = clean.startsWith('52') ? clean : `52${clean}`;
+                            const msg = encodeURIComponent(`¡Hola ${name}! Tu cita en BO BARBER ha sido CONFIRMADA. ¡Te esperamos!`);
+                            window.open(`https://wa.me/${withCode}?text=${msg}`, '_blank');
+                        } else {
+                            alert("El cliente no registró teléfono.");
+                        }
+                        updateAppointmentStatus(id, "confirmed");
+                    }
+                    if (btn.classList.contains('delete-btn')) {
+                        if (!confirm("¿Seguro que quieres eliminar esta cita?")) return;
+                        btn.disabled = true;
+                        btn.textContent = 'Eliminando...';
+                        deleteAppointment(id);
+                    }
+                }
+                
+                // --- ¡Función Eliminada! ---
+                // function handleDeleteAll() { ... }
+
+                /* ---------- LOAD SCHEDULE CONFIG (Sin cambios) ---------- */
+                async function loadScheduleConfig() {
+                    scheduleToggles.innerHTML = "Cargando configuración...";
+                    try {
+                        const querySnapshot = await getDocs(collection(db, "config"));
+                        scheduleToggles.innerHTML = "";
+                        let configs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                        if (configs.length === 0) {
+                            scheduleToggles.innerHTML = "<p>Configuración vacía. Ve a Firebase y crea la colección 'config' con los 7 días.</p>";
+                            return;
+                        }
+
+                        const dayOrder = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+                        configs.sort((a, b) => dayOrder.indexOf(a.day.toLowerCase()) - dayOrder.indexOf(b.day.toLowerCase()));
+
+                        configs.forEach(dayConfig => {
+                            const dayName = dayConfig.day;
+                            const isEnabled = dayConfig.status === 'enabled';
+                            
+                            const card = document.createElement('div');
+                            card.className = 'day-config-card';
+                            card.innerHTML = `
+                                <div class="day-config-header">
+                                    <span>${dayName.charAt(0).toUpperCase() + dayName.slice(1)}</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" class="status-toggle" data-id="${dayConfig.id}" ${isEnabled ? 'checked' : ''}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="time-inputs">
+                                    <label>Entrada: <input type="time" class="time-input" id="${dayConfig.id}-startTime" value="${dayConfig.startTime || '10:00'}"></label>
+                                    <label>Salida: <input type="time" class="time-input" id="${dayConfig.id}-endTime" value="${dayConfig.endTime || '21:30'}"></label>
+                                    <label>Descanso (Inicio): <input type="time" class="time-input" id="${dayConfig.id}-breakStart" value="${dayConfig.breakStart || '15:30'}"></label>
+                                    <label>Descanso (Fin): <input type="time" class="time-input" id="${dayConfig.id}-breakEnd" value="${dayConfig.breakEnd || '17:00'}"></label>
+                                </div>
+                                <button class="save-day-btn" data-id="${dayConfig.id}">Guardar Horario</button>
+                            `;
+                            scheduleToggles.appendChild(card);
+                        });
+                    } catch (err) {
+                        console.error("Error cargando config de horarios:", err);
+                        scheduleToggles.innerHTML = "<p>Error al cargar configuración.</p>";
+                    }
+                }
+
+                async function updateDayStatus(docId, newStatus) {
+                    try {
+                        const docRef = doc(db, "config", docId);
+                        await updateDoc(docRef, { status: newStatus });
+                    } catch (err) { console.error("Error actualizando status:", err); }
+                }
+                
+                async function updateDaySchedule(docId, scheduleData) {
+                    try {
+                        const docRef = doc(db, "config", docId);
+                        await updateDoc(docRef, scheduleData);
+                        alert("¡Horario guardado!");
+                    } catch (err) {
+                        console.error("Error guardando horario:", err);
+                        alert("Error al guardar, intenta de nuevo.");
+                    }
+                }
+
+                function handleToggleAction(e) {
+                    const input = e.target;
+                    if (input.classList.contains('status-toggle')) {
+                        const docId = input.dataset.id; 
+                        const newStatus = input.checked ? 'enabled' : 'disabled';
+                        input.disabled = true;
+                        updateDayStatus(docId, newStatus).finally(() => { input.disabled = false; });
+                    }
+                }
+                
+                function handleScheduleSave(e) {
+                    const btn = e.target;
+                    if (btn.classList.contains('save-day-btn')) {
+                        const docId = btn.dataset.id;
+                        const scheduleData = {
+                            startTime: $id(`${docId}-startTime`).value,
+                            endTime: $id(`${docId}-endTime`).value,
+                            breakStart: $id(`${docId}-breakStart`).value,
+                            breakEnd: $id(`${docId}-breakEnd`).value
+                        };
+                        
+                        btn.disabled = true;
+                        btn.textContent = 'Guardando...';
+                        updateDaySchedule(docId, scheduleData).finally(() => {
+                            btn.disabled = false;
+                            btn.textContent = `Guardar Horario`; 
+                        });
+                    }
+                }
+
+                async function cleanupOldAppointments() {
+                    if (!confirm("¿Seguro que quieres borrar TODAS las citas pasadas? Esta acción no se puede deshacer.")) {
+                        return;
+                    }
+                    
+                    cleanupBtn.disabled = true;
+                    cleanupBtn.innerHTML = '<i class="fa fa-sync fa-spin"></i> Limpiando...';
+
+                    try {
+                        const now = Timestamp.now();
+                        const q = query(collection(db, "appointments"), where("appointmentTimestamp", "<", now));
+                        const snapshot = await getDocs(q);
+                        
+                        if (snapshot.empty) {
+                            alert("No se encontraron citas pasadas para limpiar.");
+                            return;
+                        }
+
+                        const batch = writeBatch(db);
+                        snapshot.docs.forEach(doc => {
+                            batch.delete(doc.ref);
+                        });
+                        
+                        await batch.commit();
+                        alert(`¡Limpieza completa! Se borraron ${snapshot.size} citas pasadas.`);
+
+                    } catch (err) {
+                        console.error("Error al limpiar citas:", err);
+                        alert("Ocurrió un error al limpiar las citas.");
+                    } finally {
+                        cleanupBtn.disabled = false;
+                        cleanupBtn.innerHTML = '<i class="fa fa-trash"></i> Limpiar Citas Pasadas';
+                    }
+                }
+                
+                async function loadDailyAgenda(dateString) { 
+                    if (!dateString) {
+                        dailyAgendaList.innerHTML = "<p>Selecciona un día para ver la agenda.</p>";
+                        return;
+                    }
+                    
+                    dailyAgendaList.innerHTML = "Cargando agenda...";
+                    
+                    const startOfDay = new Date(`${dateString}T00:00:00-06:00`); 
+                    const endOfDay = new Date(`${dateString}T23:59:59-06:00`);
+                    
+                    const q = query(
+                        collection(db, "appointments"),
+                        where("status", "==", "confirmed"), 
+                        where("appointmentTimestamp", ">=", Timestamp.fromDate(startOfDay)),
+                        where("appointmentTimestamp", "<=", Timestamp.fromDate(endOfDay)),
+                        orderBy("appointmentTimestamp", "asc") 
+                    );
+                    
+                    try {
+                        const querySnapshot = await getDocs(q);
+                        if (querySnapshot.empty) {
+                            dailyAgendaList.innerHTML = "<p>No hay citas confirmadas para este día.</p>";
+                            return;
+                        }
+                        
+                        dailyAgendaList.innerHTML = ""; 
+                        querySnapshot.docs.forEach(doc => {
+                            const cita = doc.data();
+                            const item = document.createElement('div');
+                            item.className = 'daily-agenda-item';
+                            item.innerHTML = `
+                                <strong>${cita.time}</strong> - ${cita.clientName} (${cita.service})
+                                <span>${cita.clientPhone}</span>
+                            `;
+                            dailyAgendaList.appendChild(item);
+                        });
+                    } catch (err) {
+                        console.error("Error al cargar agenda del día:", err);
+                        dailyAgendaList.innerHTML = "<p>Error al cargar la agenda.</p>";
+                    }
+                }
+                
+                function getTodayISOString() {
+                    const today = new Date();
+                    today.setHours(today.getHours() - 6);
+                    return today.toISOString().split('T')[0];
+                }
+                
+                async function handleManualBooking(e) {
+                    e.preventDefault();
+                    manualBookingError.textContent = '';
+                    
+                    const name = $id('manual-name').value;
+                    const phone = $id('manual-phone').value;
+                    const service = $id('manual-service').value;
+                    const dateISO = $id('manual-date').value; 
+                    const time = $id('manual-time').value; 
+                    
+                    if (!name || !service || !dateISO || !time) {
+                        manualBookingError.textContent = "Nombre, Servicio, Fecha y Hora son requeridos.";
+                        return;
+                    }
+                    
+                    manualSubmitBtn.disabled = true;
+                    manualSubmitBtn.textContent = 'Guardando...';
+                    
+                    const dateObj = new Date(`${dateISO}T12:00:00-06:00`); 
+                    const fullDateFormatter = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                    const dayString = fullDateFormatter.format(dateObj).charAt(0).toUpperCase() + fullDateFormatter.format(dateObj).slice(1);
+                    
+                    const appointmentTimestamp = new Date(`${dateISO}T${time}:00`);
+
+                    const newAppointment = {
+                        clientName: name,
+                        clientPhone: phone,
+                        day: dayString, 
+                        time: time,
+                        status: "confirmed", 
+                        service: service,
+                        createdAt: serverTimestamp(), 
+                        appointmentTimestamp: appointmentTimestamp 
+                    };
+                    
+                    try {
+                        await addDoc(collection(db, "appointments"), newAppointment);
+                        alert(`¡Cita confirmada para ${name} guardada!`);
+                        manualBookingForm.reset();
+                        loadDailyAgenda(agendaDatePicker.value); 
+                    } catch (err) {
+                        console.error("Error al guardar cita manual:", err);
+                        manualBookingError.textContent = "Error al guardar. Intenta de nuevo.";
+                    } finally {
+                        manualSubmitBtn.disabled = false;
+                        manualSubmitBtn.textContent = 'Agendar Cita Manual';
+                    }
+                }
+
+                // --- listeners ---
+                appointmentsList.addEventListener('click', handleAppointmentAction);
+                // deleteAllBtn.addEventListener('click', handleDeleteAll); // ¡Eliminado!
+                scheduleToggles.addEventListener('change', handleToggleAction);
+                scheduleToggles.addEventListener('click', handleScheduleSave);
+                cleanupBtn.addEventListener('click', cleanupOldAppointments);
+                agendaDatePicker.addEventListener('change', (e) => loadDailyAgenda(e.target.value));
+                manualBookingForm.addEventListener('submit', handleManualBooking); 
+                
+                // init
+                renderPendingAppointments(); 
+                loadScheduleConfig();
+                
+                const todayString = getTodayISOString();
+                agendaDatePicker.value = todayString;
+                loadDailyAgenda(todayString); 
+
+            });
+        </script>
+    </body>
+    </html>

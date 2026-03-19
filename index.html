@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>BO BARBER - Agenda tu Cita</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container header-inner">
+            <div class="brand">
+                <img src="logo.svg" alt="BO BARBER" class="logo" onerror="this.style.display='none'"/>
+                <h1 class="brand-title">BO BARBER</h1>
+            </div>
+            <nav class="main-nav">
+                <a href="#servicios">Servicios</a>
+                <a href="#galeria">Galería</a>
+                <a href="#ubicacion">Visítanos</a>
+                <a href="#scheduler" class="cta">Agendar</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container hero-inner">
+            <div class="hero-text">
+                <h2>Estilo • Detalle • Calidad</h2>
+                <p>Barbería de especialidad en cortes, barba y diseño. Reserva con nosotros y disfruta una experiencia premium.</p>
+                <a href="#scheduler" class="btn-primary">Agendar Cita</a>
+            </div>
+            <div class="hero-image" aria-hidden="true">
+                <img src="personaBuho.png" alt="Barber estilista" />
+            </div>
+        </div>
+    </section>
+
+    <main id="scheduler" class="scheduler-wrap">
+        <div class="scheduler-container container">
+            <div class="scheduler-left">
+                <h2>Agenda tu Cita</h2>
+                <p class="muted">Selecciona el servicio, día y hora. Tu solicitud será confirmada por el barbero.</p>
+
+                <div class="service-container" id="servicios">
+                    <h3>1. Elige tu Servicio</h3>
+                    <select id="service-select" class="service-select">
+                        <option value="" disabled selected>-- Selecciona un servicio --</option>
+                        <option value="Corte" data-price="95">Corte - $95</option>
+                        <option value="Corte y Ceja" data-price="100">Corte y Ceja - $100</option>
+                        <option value="Corte y Barba" data-price="120">Corte y Barba - $120</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="scheduler-right">
+                <div id="schedule-section" class="schedule-panel hidden-section">
+                    <div class="schedule-header">
+                        <h3>2. Elige Día y Hora</h3>
+                        <div class="date-navigation">
+                            <button id="prev-week" class="nav-btn" disabled aria-label="Semana anterior">
+                                <i class="fa fa-chevron-left"></i>
+                            </button>
+                            <button id="next-week" class="nav-btn" aria-label="Siguiente semana">
+                                <i class="fa fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="day-selector" class="day-selector" aria-label="Selector de días"></div>
+
+                    <h4 id="schedule-title">Horarios</h4>
+                    <div id="time-slots" class="time-slots-container" role="list"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal" class="modal" role="dialog" aria-hidden="true">
+        <div class="modal-content">
+            <button class="close-btn" aria-label="Cerrar">×</button>
+            <h3>Confirmar Solicitud</h3>
+            <div class="modal-body">
+                <p>Servicio: <strong id="modal-service"></strong></p> 
+                <p>Estás solicitando cita el <strong id="modal-day"></strong> a las <strong id="modal-time"></strong>.</p>
+
+                <form id="booking-form" novalidate>
+                    <input type="hidden" id="selected-day" />
+                    <input type="hidden" id="selected-time" />
+                    <input type="hidden" id="selected-service" />
+                    
+                    <h4>Paso 1: Completa tus datos</h4>
+                    <label for="client-name">Tu Nombre</label>
+                    <input type="text" id="client-name" required />
+                    <span id="name-error" class="error-message"></span> 
+                    
+                    <label for="client-phone">Tu Teléfono (WhatsApp)</label>
+                    <input type="tel" id="client-phone" required pattern="[0-9+\s()-]{7,}" />
+                    <span id="phone-error" class="error-message"></span> 
+                    
+                    <div class="payment-instructions">
+                        <h4>Paso 2: Realiza el pago para confirmar</h4>
+                        <p>Tu cita quedará como <strong>pendiente</strong>. Para confirmarla, por favor deposita la mitad del servicio:</p>
+                        
+                        <div class="payment-details">
+                            <span>Monto a depositar (50%):</span>
+                            <strong id="modal-half-price">$0.00</strong>
+                        </div>
+                        
+                        <div class="payment-details">
+                            <span>Cuenta (Banco Azteca):</span>
+                            <strong id="modal-card-number">4831 1212 0024 8012</strong> 
+                        </div>
+
+                        <p class="payment-final-step">
+                            Una vez hecho el pago, envía tu comprobante por 
+                            <a href="https://wa.me/524792202208" target="_blank">WhatsApp al barbero</a> 
+                            para que apruebe tu cita.
+                        </p>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Entendido, Enviar Solicitud</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <section id="galeria" class="page-section">
+        <div class="container">
+            <h2>Algunos de Nuestros Cortes</h2>
+            <div class="gallery-container" aria-live="polite">
+                <img src="buho.jpg.png" alt="Corte 1" class="gallery-item" data-full="buho.jpg.png">
+                <img src="buho2.jpg.png" alt="Corte 2" class="gallery-item" data-full="buho2.jpg.png">
+                <img src="buho3.jpg.png" alt="Corte 3" class="gallery-item" data-full="buho3.jpg.png">
+                <img src="buho4.png" alt="Corte 4" class="gallery-item" data-full="buho4.png">
+                <img src="buho5.png" alt="Corte 5" class="gallery-item" data-full="buho5.png">
+                <img src="buho6.png" alt="Corte 6" class="gallery-item" data-full="buho6.png">
+                <img src="buho7.png" alt="Corte 7" class="gallery-item" data-full="buho7.png">
+                <img src="buho8.png" alt="Corte 8" class="gallery-item" data-full="buho8.png">
+            </div>
+        </div>
+    </section>
+
+    <div id="lightbox" class="lightbox" aria-hidden="true">
+        <button class="lightbox-close" aria-label="Cerrar imagen">×</button>
+        <img id="lightbox-img" src="" alt=""/>
+        <div class="lightbox-caption"></div>
+    </div>
+
+    <section id="ubicacion" class="page-section">
+        <div class="container">
+            <h2>Visítanos</h2>
+            <p>C. Ceferino Ortiz 510, Leon II, 37408 León de los Aldama, Gto.</p>
+            <div class="map-responsive">
+                <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3721.492652158659!2d-101.7118318256345!3d21.13220518335048!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x842bbf50136215c1%3A0x633a6f6f56e6d11b!2sC.%20Ceferino%20Ortiz%20510%2C%20Leon%20II%2C%2037408%20Le%C3%B3n%20de%20los%20Aldama%2C%20Gto.%2C%20Mexico!5e0!3m2!1ses-419!2smx!4v1731259160537!5m2!1ses-419!2smx" 
+                    width="600" 
+                    height="450" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contacto">
+        <div class="container footer-inner">
+            <div class="social">
+                <p>Síguenos en</p>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/B4rberShopBo" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/bo_b4rber/" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/524792202208" target="_blank" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <p class="footer-copy">© 2025 BO BARBER. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/524792202208" class="whatsapp-fab" target="_blank" aria-label="Enviar WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script type="module">
+        // --- Importaciones de Firebase ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+        import { 
+            getFirestore, collection, getDocs, addDoc, 
+            doc, query, where, getDoc, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+        
+        // --- Configuración de Firebase ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAAjL_Tur33-tbZa4kC8OoQYF2jNXEKd4o",
+            authDomain: "barberiaappenrique.firebaseapp.com",
+            projectId: "barberiaappenrique",
+            storageBucket: "barberiaappenrique.firebasestorage.app",
+            messagingSenderId: "181014839149",
+            appId: "1:181014839149:web:664079f16c68628af72464",
+            measurementId: "G-BWG46JCZDK"
+        };
+
+        // --- Inicializar Firebase ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- Lógica del script (parte del CLIENTE) ---
+        
+        function $id(id) { return document.getElementById(id); }
+        function exists(selector) { return document.querySelector(selector) !== null; }
+
+        if (exists('.scheduler-container')) {
+            const serviceSelect = $id('service-select');
+            const scheduleSection = $id('schedule-section');
+            const daySelector = $id('day-selector');
+            const scheduleTitle = $id('schedule-title');
+            const timeSlotsContainer = $id('time-slots');
+            const modal = $id('modal');
+            const closeModalBtn = modal && modal.querySelector('.close-btn');
+            const bookingForm = $id('booking-form');
+            const modalDay = $id('modal-day');
+            const modalTime = $id('modal-time');
+            const modalService = $id('modal-service');
+            const selectedDayInput = $id('selected-day');
+            const selectedTimeInput = $id('selected-time');
+            const selectedServiceInput = $id('selected-service');
+            const prevWeekBtn = $id('prev-week');
+            const nextWeekBtn = $id('next-week');
+            const galleryItems = document.querySelectorAll('.gallery-item');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxClose = document.querySelector('.lightbox-close');
+            const nameError = $id('name-error');
+            const phoneError = $id('phone-error');
+            const modalHalfPrice = $id('modal-half-price');
+
+            let currentFullDate = "";
+            let currentISODate = ""; 
+            let currentDayOffset = 0;
+            let isLoadingDays = false;
+            
+            let scheduleConfigStore = {};
+            const dayNamesSpanish = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
+
+            function createTimeSlots(start, end) {
+                const slots = [];
+                let [startH, startM] = start.split(':').map(Number);
+                const [endH, endM] = end.split(':').map(Number);
+                
+                let currentTime = new Date();
+                currentTime.setHours(startH, startM, 0, 0);
+                
+                let endTime = new Date();
+                endTime.setHours(endH, endM, 0, 0);
+
+                while (currentTime < endTime) {
+                    slots.push(`${currentTime.getHours()}:${String(currentTime.getMinutes()).padStart(2, '0')}`);
+                    currentTime.setMinutes(currentTime.getMinutes() + 30); 
+                }
+                return slots;
+            }
+
+            async function renderSchedule(fullDate, dayName, isoDate) {
+                if (!fullDate || !dayName || !isoDate) {
+                    scheduleTitle.textContent = "Selecciona un día";
+                    timeSlotsContainer.innerHTML = "<p>Por favor, selecciona un día disponible.</p>";
+                    return;
+                }
+                
+                currentFullDate = fullDate;
+                currentISODate = isoDate; 
+                scheduleTitle.textContent = fullDate;
+                timeSlotsContainer.innerHTML = "Cargando horarios...";
+                
+                const config = scheduleConfigStore[dayName];
+                if (!config) {
+                     timeSlotsContainer.innerHTML = "<p>Error: No se encontró configuración para este día.</p>";
+                     return;
+                }
+
+                const slotsTurno1 = createTimeSlots(config.startTime, config.breakStart);
+                const slotsTurno2 = createTimeSlots(config.breakEnd, config.endTime);
+                const availableHours = [...slotsTurno1, ...slotsTurno2];
+
+                if (availableHours.length === 0) {
+                    timeSlotsContainer.innerHTML = "<p>El barbero no tiene horas disponibles este día.</p>";
+                    return;
+                }
+
+                try {
+                    const q = query(collection(db, "appointments"), where("day", "==", fullDate));
+                    const querySnapshot = await getDocs(q);
+                    const confirmedSlots = querySnapshot.docs.map(doc => doc.data().time);
+
+                    timeSlotsContainer.innerHTML = "";
+                    let slotsRendered = 0; 
+
+                    availableHours.forEach(time => {
+                        const isBooked = confirmedSlots.includes(time);
+                        
+                        const slotElement = document.createElement("div");
+                        slotElement.className = "time-slot";
+                        const timeText = document.createElement("span");
+                        timeText.className = "time-slot-time";
+                        timeText.textContent = time;
+                        const bookBtn = document.createElement("button");
+                        bookBtn.className = "time-slot-btn";
+                        bookBtn.textContent = isBooked ? "Ocupado" : "Agendar";
+                        bookBtn.disabled = !!isBooked;
+
+                        if (!isBooked) {
+                            bookBtn.addEventListener("click", () => openModal(currentFullDate, time));
+                            slotsRendered++;
+                        } else {
+                            bookBtn.classList.add("booked");
+                        }
+
+                        slotElement.appendChild(timeText);
+                        slotElement.appendChild(bookBtn);
+                        timeSlotsContainer.appendChild(slotElement);
+                    });
+
+                    if (slotsRendered === 0) {
+                        timeSlotsContainer.innerHTML = "<p>Todos los horarios de este día están ocupados. Por favor, selecciona otro día.</p>";
+                    }
+
+                } catch (err) {
+                    console.error("Error al cargar horarios:", err);
+                    timeSlotsContainer.innerHTML = "<p>Error al cargar horarios. Intenta de nuevo.</p>";
+                }
+            }
+
+            function openModal(day, time) {
+                const service = serviceSelect.value;
+                if (!service) { alert("Selecciona primero un servicio."); return; }
+                
+                const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+                const price = selectedOption.dataset.price;
+                if (price) {
+                    const halfPrice = parseFloat(price) / 2;
+                    modalHalfPrice.textContent = `$${halfPrice.toFixed(2)}`;
+                } else {
+                    modalHalfPrice.textContent = "N/A";
+                }
+
+                nameError.textContent = '';
+                phoneError.textContent = '';
+                modalDay.textContent = day;
+                modalTime.textContent = time;
+                modalService.textContent = service;
+                selectedDayInput.value = day;
+                selectedTimeInput.value = time;
+                selectedServiceInput.value = service;
+                modal.classList.add('visible');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+            function closeModal() {
+                modal.classList.remove('visible');
+                modal.setAttribute('aria-hidden', 'true');
+                if (bookingForm) bookingForm.reset();
+                nameError.textContent = '';
+                phoneError.textContent = '';
+            }
+            if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+            window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+            async function isSlotTaken(day, time) {
+                try {
+                    const q = query(collection(db, "appointments"), where("day", "==", day), where("time", "==", time));
+                    const querySnapshot = await getDocs(q);
+                    return !querySnapshot.empty;
+                } catch (e) {
+                    console.error("Error comprobando duplicados:", e);
+                    return true; 
+                }
+            }
+
+            async function handleFormSubmit(event) {
+                event.preventDefault();
+                nameError.textContent = '';
+                phoneError.textContent = '';
+                const nameInput = $id('client-name');
+                const phoneInput = $id('client-phone');
+                const name = nameInput.value.trim();
+                const phone = phoneInput.value.trim();
+                const day = selectedDayInput.value;
+                const time = selectedTimeInput.value;
+                const service = selectedServiceInput.value;
+                let hasError = false;
+                if (!name) { nameError.textContent = "El nombre es requerido."; hasError = true; }
+                if (!phone) { phoneError.textContent = "El teléfono es requerido."; hasError = true; } 
+                else if (!/[0-9+\s()-]{7,}/.test(phone)) { phoneError.textContent = "Formato de teléfono inválido (ej. +52 123 456 7890)."; hasError = true; }
+                if (hasError) return; 
+                
+                const submitButton = event.target.querySelector('.submit-btn');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Validando...';
+                
+                const taken = await isSlotTaken(day, time);
+                if (taken) {
+                    alert(`Lo sentimos, el horario ${time} del ${day} ya fue reservado. Elige otro horario.`);
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Entendido, Enviar Solicitud';
+                    renderSchedule(currentFullDate, dayNamesSpanish[new Date().getDay()], currentISODate); 
+                    closeModal();
+                    return;
+                }
+                
+                submitButton.textContent = 'Enviando...';
+
+                const isoDate = currentISODate; 
+                const [hours, minutes] = time.split(':');
+                const appointmentTimestamp = new Date(`${isoDate}T${time}:00`);
+                
+                const newAppointment = {
+                    clientName: name,
+                    clientPhone: phone,
+                    day: day,
+                    time: time,
+                    status: "pending",
+                    service: service,
+                    createdAt: serverTimestamp(), 
+                    appointmentTimestamp: appointmentTimestamp 
+                };
+
+                try {
+                    await addDoc(collection(db, "appointments"), newAppointment);
+                    alert(`¡Solicitud enviada!\nTu cita para ${service} el ${day} a las ${time} está pendiente de aprobación.\n\nRecuerda enviar tu comprobante de pago por WhatsApp para confirmar.`);
+                    closeModal();
+                    renderSchedule(currentFullDate, dayNamesSpanish[new Date().getDay()], currentISODate); 
+                } catch (err) {
+                    console.error("Error al guardar la cita:", err);
+                    alert("Hubo un error al enviar la solicitud. Intenta de nuevo.");
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Entendido, Enviar Solicitud';
+                }
+            }
+            if (bookingForm) bookingForm.addEventListener('submit', handleFormSubmit);
+
+            async function loadAndDisplayAvailableDays(offset = 0) {
+                if (isLoadingDays) return;
+                isLoadingDays = true;
+                prevWeekBtn.disabled = true;
+                nextWeekBtn.disabled = true;
+                daySelector.innerHTML = "Cargando días...";
+
+                try {
+                    if (Object.keys(scheduleConfigStore).length === 0) {
+                        const querySnapshot = await getDocs(collection(db, "config"));
+                        querySnapshot.docs.forEach(doc => {
+                            scheduleConfigStore[doc.id] = doc.data(); 
+                        });
+                    }
+                    
+                    const enabledDayNames = Object.values(scheduleConfigStore)
+                        .filter(cfg => cfg.status === 'enabled')
+                        .map(cfg => cfg.day.toLowerCase());
+
+                    const fullDateFormatter = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                    const initialFormatter = new Intl.DateTimeFormat('es-ES', { weekday: 'short' });
+
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); 
+                    if (offset !== 0) today.setDate(today.getDate() + offset);
+
+                    daySelector.innerHTML = "";
+                    let daysFound = 0;
+                    let firstAvailableFullDate = null;
+                    let firstAvailableDayName = null;
+                    let firstAvailableISODate = null; 
+
+                    for (let i = 0; i < 14 && daysFound < 7; i++) {
+                        const currentDate = new Date(today);
+                        currentDate.setDate(today.getDate() + i);
+                        const dayName = dayNamesSpanish[currentDate.getDay()];
+                        
+                        if (enabledDayNames.includes(dayName)) {
+                            
+                            const now = new Date();
+                            now.setHours(0,0,0,0);
+                            if (currentDate < now) continue; 
+
+                            let fullDateString = fullDateFormatter.format(currentDate);
+                            fullDateString = fullDateString.charAt(0).toUpperCase() + fullDateString.slice(1);
+                            const initial = initialFormatter.format(currentDate).charAt(0).toUpperCase();
+                            const dateNumber = currentDate.getDate();
+                            const isoDateString = currentDate.toISOString().split('T')[0]; 
+                            
+                            if (!firstAvailableFullDate) {
+                                firstAvailableFullDate = fullDateString;
+                                firstAvailableDayName = dayName;
+                                firstAvailableISODate = isoDateString; 
+                            }
+
+                            const dayButton = document.createElement('button');
+                            dayButton.className = 'day-btn';
+                            dayButton.dataset.day = fullDateString;
+                            dayButton.dataset.dayName = dayName; 
+                            dayButton.dataset.dateIso = isoDateString; 
+                            dayButton.innerHTML = `${initial}<span class="day-number">${dateNumber}</span>`;
+                            daySelector.appendChild(dayButton);
+                            daysFound++;
+                        }
+                    }
+
+                    if (firstAvailableFullDate) {
+                        currentFullDate = firstAvailableFullDate;
+                        currentISODate = firstAvailableISODate; 
+                        const defaultDayButton = document.querySelector(`.day-btn[data-day="${firstAvailableFullDate}"]`);
+                        if (defaultDayButton) defaultDayButton.classList.add('active');
+                        renderSchedule(currentFullDate, firstAvailableDayName, currentISODate);
+                    } else {
+                        scheduleTitle.textContent = "No hay días disponibles";
+                        timeSlotsContainer.innerHTML = "<p>No se encontraron días habilitados.</p>";
+                    }
+                } catch (err) {
+                    console.error("Error al cargar configuración:", err);
+                    daySelector.innerHTML = "<p>Error al cargar días.</p>";
+                } finally {
+                    isLoadingDays = false;
+                    nextWeekBtn.disabled = false;
+                    prevWeekBtn.disabled = (currentDayOffset === 0);
+                }
+            }
+
+            daySelector.addEventListener('click', (e) => {
+                const clickedButton = e.target.closest('.day-btn');
+                if (!clickedButton) return;
+                document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+                clickedButton.classList.add('active');
+                renderSchedule(
+                    clickedButton.dataset.day, 
+                    clickedButton.dataset.dayName,
+                    clickedButton.dataset.dateIso 
+                );
+            });
+            serviceSelect.addEventListener('change', () => {
+                if (serviceSelect.value) {
+                    scheduleSection.style.display = 'block';
+                    currentDayOffset = 0;
+                    loadAndDisplayAvailableDays(currentDayOffset);
+                }
+            });
+            nextWeekBtn.addEventListener('click', () => {
+                if (isLoadingDays) return;
+                currentDayOffset += 7;
+                loadAndDisplayAvailableDays(currentDayOffset);
+            });
+            prevWeekBtn.addEventListener('click', () => {
+                if (isLoadingDays) return;
+                currentDayOffset -= 7;
+                if (currentDayOffset < 0) currentDayOffset = 0;
+                loadAndDisplayAvailableDays(currentDayOffset);
+            });
+            
+            galleryItems.forEach(img => {
+                img.addEventListener('click', () => {
+                    const src = img.dataset.full || img.src;
+                    lightboxImg.src = src;
+                    lightboxImg.alt = img.alt || 'Corte';
+                    document.querySelector('.lightbox-caption').textContent = img.alt || '';
+                    lightbox.classList.add('visible');
+                    lightbox.setAttribute('aria-hidden','false');
+                });
+            });
+            if (lightboxClose) lightboxClose.addEventListener('click', () => {
+                lightbox.classList.remove('visible');
+                lightbox.setAttribute('aria-hidden','true');
+            });
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    lightbox.classList.remove('visible');
+                    lightbox.setAttribute('aria-hidden','true');
+                }
+            });
+
+            // Init
+            scheduleSection.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
